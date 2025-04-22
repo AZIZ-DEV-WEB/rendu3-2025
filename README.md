@@ -66,4 +66,85 @@ Reservation
 - Un `Client` peut effectuer plusieurs réservations.
 - Une `Chambre` est gérée par un seul `Administrateur`.
 
+---
+
+### Diagramme état-transitions (cycle de vie de `Reservation`) en PlantUML
+```plantuml
+@startuml
+[*] --> Créée : initier réservation
+
+Créée --> EnAttente : soumettre
+
+EnAttente --> Confirmée : valider
+EnAttente --> Annulée : annuler
+
+Confirmée --> Terminée : dateFin atteinte
+Confirmée --> Annulée : annuler
+
+Créée --> Annulée : annuler
+
+Créée : état initial après création
+EnAttente : attente de validation
+Confirmée : réservation validée
+Annulée : réservation annulée
+Terminée : séjour terminé
+@enduml
+```
+
+---
+
+### Traduction des associations et compositions (Raffinement 2)
+
+#### Associations -> Attributs :
+- `Reservation` contient un attribut `client : Client`
+- `Reservation` contient un attribut `chambre : Chambre`
+- `Client` a une `listeReservations : List<Reservation>`
+- `Administrateur` gère une `listeChambresGerees : List<Chambre>`
+
+#### Agrégations/Compositions :
+- Composition implicite entre `Reservation` et `Client` : une réservation n'existe que si un client existe.
+- Composition entre `Chambre` et `Reservation` (temporaire pendant la période de réservation).
+
+---
+
+### Traduction des diagrammes de séquence et états en algorithmes
+
+#### Exemple d'algorithme : Création d'une réservation
+```pseudo
+fonction creerReservation(client, chambre, dateDebut, dateFin):
+    si chambre.estDisponible(dateDebut, dateFin):
+        reservation = nouvelle Reservation()
+        reservation.client = client
+        reservation.chambre = chambre
+        reservation.dateDebut = dateDebut
+        reservation.dateFin = dateFin
+        reservation.statut = "En attente"
+        client.ajouterReservation(reservation)
+        retourner reservation
+    sinon:
+        afficher("Chambre non disponible")
+        retourner null
+```
+
+#### Exemple d'algorithme : Validation de réservation par l'administrateur
+```pseudo
+fonction validerReservation(reservation):
+    si reservation.statut == "En attente":
+        reservation.statut = "Confirmée"
+```
+
+#### Exemple d'algorithme : Annulation
+```pseudo
+fonction annulerReservation(reservation):
+    si reservation.statut != "Terminée":
+        reservation.statut = "Annulée"
+```
+
+#### Exemple d'algorithme : Fin de réservation automatique
+```pseudo
+fonction verifierReservations(dateActuelle):
+    pour chaque reservation dans toutesReservations:
+        si reservation.dateFin < dateActuelle et reservation.statut == "Confirmée":
+            reservation.statut = "Terminée"
+```
 
